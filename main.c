@@ -196,7 +196,7 @@ StudentEntry *addStudent(StudentEntry *head)
     printf("Nama Siswa:\n");
     getInputDynamic(&new_data.name, NULL, NULL);
 
-    printf("Jenis Kelamin Siswa:\n");
+    printf("Jenis Kelamin Siswa (L/P):\n");
     getInput(&new_data.sex, 1, "lpLP", NULL);
     new_data.sex = toupper(new_data.sex);
 
@@ -242,7 +242,7 @@ StudentEntry *addStudent(StudentEntry *head)
     else
         allocateString(&new_data.guardian_phone, "-");
 
-    new_entry       = calloc(1, sizeof(StudentEntry));
+    new_entry       = (StudentEntry *)calloc(1, sizeof(StudentEntry));
     new_entry->next = head;
     new_entry->data = new_data;
 
@@ -336,7 +336,7 @@ StudentEntry *editStudent(StudentEntry *head)
     printf("\n");
     printf("[12] Hapus Data Siswa\n");
     printf("[13] Batal\n");
-    printf("---");
+    printf("---\n");
 
     scanf("%d", &choice);
     clearInput();
@@ -479,10 +479,16 @@ void viewStudent(StudentEntry *head)
     printf("Telpon Wali    : %s\n", student->data.guardian_phone);
 }
 
+void clearStudents(StudentEntry *head)
+{
+    StudentEntry *curr = head;
+    while (curr != NULL) curr = deleteStudent(curr, curr->data.nisn);
+}
+
 int main(void)
 {
     // Collection of all student data
-    StudentEntry *studentEntries = NULL;
+    StudentEntry *student_entries = NULL;
 
     int choice = 0;
 
@@ -504,15 +510,17 @@ int main(void)
 
         switch (choice)
         {
-            case 1: studentEntries = addStudent(studentEntries); break;
-            case 2: studentEntries = editStudent(studentEntries); break;
-            case 3: viewStudent(studentEntries); break;
             case 4: printf("Keluar dari program\n"); break;
+            case 1: student_entries = addStudent(student_entries); break;
+            case 2: student_entries = editStudent(student_entries); break;
+            case 3: viewStudent(student_entries); break;
             default: printf("Pilihan tidak valid\n"); break;
         }
 
         printf("\n");
     }
+
+    clearStudents(student_entries);
 
     return 0;
 }
