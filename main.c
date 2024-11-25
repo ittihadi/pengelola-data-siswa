@@ -164,7 +164,7 @@ StudentEntry *findStudent(StudentEntry *head, const char *nisn)
     StudentEntry *result = NULL;
     StudentEntry *curr   = head;
 
-    while (head != NULL)
+    while (curr != NULL)
     {
         if (strcmp(curr->data.nisn, nisn) == 0)
         {
