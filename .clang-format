@@ -6,7 +6,7 @@ AllowShortFunctionsOnASingleLine: All
 AlignTrailingComments: true
 AlwaysBreakAfterReturnType: None
 PenaltyReturnTypeOnItsOwnLine: 9999
-PointerAlignment: Left
+PointerAlignment: Right
 SortIncludes: true
 IndentWidth: 4
 ColumnLimit: 0
