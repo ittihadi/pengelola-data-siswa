@@ -438,7 +438,7 @@ StudentEntry *editStudent(StudentEntry *head)
     return new_head;
 }
 
-// Display all student data
+// Display all data of a student
 void viewStudent(StudentEntry *head)
 {
     StudentEntry *student = NULL;
@@ -479,6 +479,7 @@ void viewStudent(StudentEntry *head)
     printf("Telpon Wali    : %s\n", student->data.guardian_phone);
 }
 
+// Free student entry list
 void clearStudents(StudentEntry *head)
 {
     StudentEntry *curr = head;
