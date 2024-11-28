@@ -486,22 +486,226 @@ void clearStudents(StudentEntry *head)
     while (curr != NULL) curr = deleteStudent(curr, curr->data.nisn);
 }
 
+/*
+ * Load Date -> store loaded file, no default
+ * Save Data -> default path is last loaded file if exists,
+ *              otherwise a default path with conflict mitigation
+ */
+
+// Load student data collection from file
+StudentEntry *loadData(char **loaded_file_ptr)
+{
+    StudentEntry *result     = NULL;
+    FILE         *input_file = NULL;
+    char          path_buffer[128];
+    char          buffer[1024];
+
+    printf("--- Muat Data ---\n");
+    printf("Lokasi File:\n");
+    getInput(path_buffer, sizeof(path_buffer) - 1, NULL, NULL);
+
+    input_file = fopen(path_buffer, "r");
+    if (input_file == NULL)
+    {
+        printf("File %s tidak ditemukan, gagal membaca file\n", path_buffer);
+        return result;
+    }
+
+    // File header
+    fgets(buffer, sizeof(buffer), input_file);
+    buffer[strcspn(buffer, "\n")] = '\0';
+    if (strcmp(buffer, "PDSiswa1") != 0)
+    {
+        printf("Peringatan! Header file %s tidak sesuai, data mungkin salah\n",
+               path_buffer);
+    }
+
+    // NISN
+    while (fscanf(input_file, "%10[^\n]\n", buffer) != EOF)
+    {
+        StudentEntry *temp = (StudentEntry *)calloc(1, sizeof(StudentEntry));
+        temp->data         = (StudentData){0};
+
+        temp->next = result;
+        result     = temp;
+
+        strncpy(temp->data.nisn, buffer, 10);
+
+        fscanf(input_file, "%1023[^\n]\n", buffer);
+        allocateString(&temp->data.name, buffer);
+
+        fscanf(input_file, "%c\n", &temp->data.sex);
+
+        fscanf(input_file, "%1023[^\n]\n", buffer);
+        allocateString(&temp->data.birth_place, buffer);
+
+        fscanf(input_file, "%d-%d-%d\n",
+               &temp->data.birth_date.day,
+               &temp->data.birth_date.month,
+               &temp->data.birth_date.year);
+
+        fscanf(input_file, "%1023[^\n]\n", buffer);
+        allocateString(&temp->data.address, buffer);
+
+        fscanf(input_file, "%31[^\n]\n", buffer);
+        allocateString(&temp->data.phone_number, buffer);
+
+        fscanf(input_file, "%1023[^\n]\n", buffer);
+        allocateString(&temp->data.father_name, buffer);
+
+        fscanf(input_file, "%31[^\n]\n", buffer);
+        allocateString(&temp->data.father_phone, buffer);
+
+        fscanf(input_file, "%1023[^\n]\n", buffer);
+        allocateString(&temp->data.mother_name, buffer);
+
+        fscanf(input_file, "%31[^\n]\n", buffer);
+        allocateString(&temp->data.mother_phone, buffer);
+
+        fscanf(input_file, "%1023[^\n]\n", buffer);
+        allocateString(&temp->data.guardian_name, buffer);
+
+        fscanf(input_file, "%31[^\n]\n", buffer);
+        allocateString(&temp->data.guardian_phone, buffer);
+    }
+
+    // Correct ordering by reversing list
+    StudentEntry *curr = result;
+    StudentEntry *prev = NULL;
+
+    while (curr != NULL)
+    {
+        StudentEntry *temp_next = curr->next;
+
+        curr->next = prev;
+        prev       = curr;
+        curr       = temp_next;
+    }
+
+    result = prev;
+
+    if (loaded_file_ptr != NULL)
+        allocateString(loaded_file_ptr, path_buffer);
+
+    fclose(input_file);
+    printf("Data berhasil dimuat\n");
+
+    return result;
+}
+
+// Save student data collection to file
+void saveData(StudentEntry *head, char *last_loaded_file)
+{
+    FILE *output_file;
+    char  path_buffer[128];
+    char  suggested_path[128];
+    char  choice;
+
+    StudentEntry *curr = head;
+
+    // Suggest already loaded file
+    if (last_loaded_file != NULL)
+        strncpy(suggested_path, last_loaded_file, sizeof(suggested_path));
+    else
+    {
+        strcpy(suggested_path, "data_siswa.irf");
+
+        // Check if default file exists and append number after
+        output_file = fopen(suggested_path, "r");
+        while (output_file != NULL)
+        {
+            fclose(output_file);
+            if (strlen(suggested_path) > 120)
+                break;
+
+            strcpy(suggested_path + strlen(suggested_path) - 4, "_1.irf");
+            output_file = fopen(suggested_path, "r");
+        }
+    }
+
+    printf("--- Simpan Data ---\n");
+    printf("Lokasi File (kosongkan untuk %s):\n", suggested_path);
+    getInput(path_buffer, sizeof(path_buffer) - 1, NULL, suggested_path);
+
+    output_file = fopen(path_buffer, "r");
+    if (output_file != NULL)
+    {
+        // Check if file exists and close immediately
+        fclose(output_file);
+
+        // If path isn't the suggested path, warn for collision
+        if (strcmp(path_buffer, suggested_path) != 0)
+        {
+            printf("File sudah ada, apakah anda ingin timpa dengan file baru? (Y/[T]):\n");
+            getInput(&choice, 1, "yYtT", "T");
+
+            if (toupper(choice) == 'T')
+            {
+                printf("Penyimpanan file batal\n");
+                return;
+            }
+        }
+    }
+
+    output_file = fopen(path_buffer, "w");
+    if (output_file == NULL)
+    {
+        printf("Gagal membuat file %s\n", path_buffer);
+        return;
+    }
+
+    // File header
+    fprintf(output_file, "PDSiswa1\n");
+
+    while (curr != NULL)
+    {
+        fprintf(output_file, "%s\n", curr->data.nisn);
+        fprintf(output_file, "%s\n", curr->data.name);
+        fprintf(output_file, "%c\n", curr->data.sex);
+        fprintf(output_file, "%s\n", curr->data.birth_place);
+        fprintf(output_file, "%d-%d-%d\n",
+                curr->data.birth_date.day,
+                curr->data.birth_date.month,
+                curr->data.birth_date.year);
+
+        fprintf(output_file, "%s\n", curr->data.address);
+        fprintf(output_file, "%s\n", curr->data.phone_number);
+
+        fprintf(output_file, "%s\n", curr->data.father_name);
+        fprintf(output_file, "%s\n", curr->data.father_phone);
+
+        fprintf(output_file, "%s\n", curr->data.mother_name);
+        fprintf(output_file, "%s\n", curr->data.mother_phone);
+
+        fprintf(output_file, "%s\n", curr->data.guardian_name);
+        fprintf(output_file, "%s\n", curr->data.guardian_phone);
+
+        curr = curr->next;
+    }
+
+    fclose(output_file);
+    printf("Data berhasil disimpan\n");
+}
+
 int main(void)
 {
     // Collection of all student data
     StudentEntry *student_entries = NULL;
 
-    int choice = 0;
+    int   choice            = 0;
+    char *loaded_file_cache = NULL;
 
     printf("--- Selamat Datang di Sistem Pendataan Siswa ---\n\n");
 
-    while (choice != 4)
+    while (choice != 6)
     {
         printf("Menu Utama\n");
         printf("[1] Tambahkan data siswa\n");
         printf("[2] Edit data siswa\n");
         printf("[3] Tampilkan data siswa\n");
-        printf("[4] Keluar dari program\n");
+        printf("[4] Muat data siswa\n");
+        printf("[5] Simpan data siswa\n");
+        printf("[6] Keluar dari program\n");
         printf("Masukkan pilihan Anda: ");
 
         choice = 0;
@@ -511,10 +715,16 @@ int main(void)
 
         switch (choice)
         {
-            case 4: printf("Keluar dari program\n"); break;
             case 1: student_entries = addStudent(student_entries); break;
             case 2: student_entries = editStudent(student_entries); break;
             case 3: viewStudent(student_entries); break;
+            case 4:
+                // Clean previously loaded data
+                clearStudents(student_entries);
+                student_entries = loadData(&loaded_file_cache);
+                break;
+            case 5: saveData(student_entries, loaded_file_cache); break;
+            case 6: printf("Keluar dari program\n"); break;
             default: printf("Pilihan tidak valid\n"); break;
         }
 
