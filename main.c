@@ -6,9 +6,9 @@
 // Simple date struct
 typedef struct Date
 {
-    char day;
-    char month;
-    int  year;
+    int day;
+    int month;
+    int year;
 } Date;
 
 // Individual student data
