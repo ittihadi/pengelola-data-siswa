@@ -20,17 +20,11 @@ typedef struct StudentData
     char *birth_place;
     Date  birth_date;
 
+    char *hobby;
+    char *class;
+
     char *address;
     char *phone_number;
-
-    char *father_name;
-    char *father_phone;
-
-    char *mother_name;
-    char *mother_phone;
-
-    char *guardian_name;
-    char *guardian_phone;
 } StudentData;
 
 // Collection type
@@ -206,41 +200,17 @@ StudentEntry *addStudent(StudentEntry *head)
     printf("Tanggal Lahir Siswa (DD-MM-YYYY):\n");
     getInputDate(&new_data.birth_date);
 
+    printf("Hobi Siswa:\n");
+    getInputDynamic(&new_data.hobby, NULL, NULL);
+
+    printf("Kelas Siswa:\n");
+    getInputDynamic(&new_data.class, NULL, NULL);
+
     printf("Alamat Rumah Siswa:\n");
     getInputDynamic(&new_data.address, NULL, NULL);
 
     printf("Nomor Telpon Siswa:\n");
     getInputPhone(&new_data.phone_number, "-");
-
-    printf("Nama Ayah Siswa:\n");
-    getInputDynamic(&new_data.father_name, NULL, "-");
-    if (strcmp(new_data.father_name, "-") != 0)
-    {
-        printf("Nomor Telpon Ayah Siswa:\n");
-        getInputPhone(&new_data.father_phone, "-");
-    }
-    else
-        allocateString(&new_data.father_phone, "-");
-
-    printf("Nama Ibu Siswa:\n");
-    getInputDynamic(&new_data.mother_name, NULL, "-");
-    if (strcmp(new_data.mother_name, "-") != 0)
-    {
-        printf("Nomor Telpon Ibu Siswa:\n");
-        getInputPhone(&new_data.mother_phone, "-");
-    }
-    else
-        allocateString(&new_data.mother_phone, "-");
-
-    printf("Nama Wali Siswa:\n");
-    getInputDynamic(&new_data.guardian_name, NULL, "-");
-    if (strcmp(new_data.guardian_name, "-") != 0)
-    {
-        printf("Nomor Telpon Wali Siswa:\n");
-        getInputPhone(&new_data.guardian_phone, "-");
-    }
-    else
-        allocateString(&new_data.guardian_phone, "-");
 
     new_entry       = (StudentEntry *)calloc(1, sizeof(StudentEntry));
     new_entry->next = head;
@@ -274,14 +244,8 @@ StudentEntry *deleteStudent(StudentEntry *head, const char *nisn)
             free(curr->data.address);
             free(curr->data.phone_number);
 
-            free(curr->data.father_name);
-            free(curr->data.father_phone);
-
-            free(curr->data.mother_name);
-            free(curr->data.mother_phone);
-
-            free(curr->data.guardian_name);
-            free(curr->data.guardian_phone);
+            free(curr->data.hobby);
+            free(curr->data.class);
 
             free(curr);
             break;
@@ -322,28 +286,17 @@ StudentEntry *editStudent(StudentEntry *head)
            target_entry->data.birth_date.day,
            target_entry->data.birth_date.month,
            target_entry->data.birth_date.year);
-    printf("[4] Alamat             : %s\n", target_entry->data.address);
-    printf("[5] Nomor Telpon       : %s\n", target_entry->data.phone_number);
+    printf("[4] Hobi               : %s\n", target_entry->data.hobby);
+    printf("[5] Kelas              : %s\n", target_entry->data.class);
+    printf("[6] Alamat             : %s\n", target_entry->data.address);
+    printf("[7] Nomor Telpon       : %s\n", target_entry->data.phone_number);
     printf("\n");
-    printf("[6] Nama Ayah          : %s\n", target_entry->data.father_name);
-    printf("[7] Nomor Telpon Ayah  : %s\n", target_entry->data.father_phone);
-    printf("\n");
-    printf("[8] Nama Ibu           : %s\n", target_entry->data.mother_name);
-    printf("[9] Nomor Telpon Ibu   : %s\n", target_entry->data.mother_phone);
-    printf("\n");
-    printf("[10] Nama Wali         : %s\n", target_entry->data.guardian_name);
-    printf("[11] Nomor Telpon Wali : %s\n", target_entry->data.guardian_phone);
-    printf("\n");
-    printf("[12] Hapus Data Siswa\n");
-    printf("[13] Batal\n");
+    printf("[8] Hapus Data Siswa\n");
+    printf("[9] Batal\n");
     printf("---\n");
 
     scanf("%d", &choice);
     clearInput();
-
-    int had_father   = strcmp(target_entry->data.father_name, "-") != 0;
-    int had_mother   = strcmp(target_entry->data.mother_name, "-") != 0;
-    int had_guardian = strcmp(target_entry->data.guardian_name, "-") != 0;
 
     switch (choice)
     {
@@ -360,79 +313,30 @@ StudentEntry *editStudent(StudentEntry *head)
             getInputDate(&target_entry->data.birth_date);
             break;
         case 4:
+            printf("Masukkan Hobi Baru Siswa:\n");
+            getInputDynamic(&target_entry->data.hobby, NULL, "-");
+            break;
+        case 5:
+            printf("Masukkan Kelas Baru Siswa:\n");
+            getInputDynamic(&target_entry->data.class, NULL, NULL);
+            break;
+        case 6:
             printf("Masukkan Alamat Baru Siswa:\n");
             getInputDynamic(&target_entry->data.address, NULL, NULL);
             break;
-        case 5:
+        case 7:
             printf("Masukkan Nomor Telpon Baru Siswa:\n");
             getInputPhone(&target_entry->data.phone_number, "-");
             break;
-        case 6:
-            printf("Masukkan Nama Baru Ayah Siswa (Kosongkan untuk menghapus):\n");
-            getInputDynamic(&target_entry->data.father_name, NULL, "-");
 
-            // If father now doesn't exist, remove phone number
-            if (had_father && strcmp(target_entry->data.father_name, "-") == 0)
-                allocateString(&target_entry->data.father_phone, "-");
-            break;
-        case 7:
-            // Father doesn't exist yet, get that first
-            if (!had_father)
-            {
-                printf("Masukkan Nama Baru Ayah Siswa:\n");
-                getInputDynamic(&target_entry->data.father_name, NULL, NULL);
-            }
-
-            printf("Masukkan Nomor Telpon Baru Ayah Siswa:\n");
-            getInputPhone(&target_entry->data.father_phone, "-");
-            break;
-        case 8:
-            printf("Masukkan Nama Baru Ibu Siswa (Kosongkan untuk menghapus):\n");
-            getInputDynamic(&target_entry->data.mother_name, NULL, "-");
-
-            // If mother now doesn't exist, remove phone number
-            if (had_mother && strcmp(target_entry->data.mother_name, "-") == 0)
-                allocateString(&target_entry->data.mother_phone, "-");
-            break;
-        case 9:
-            // Mother doesn't exist yet, get that first
-            if (!had_mother)
-            {
-                printf("Masukkan Nama Baru Ibu Siswa:\n");
-                getInputDynamic(&target_entry->data.mother_name, NULL, NULL);
-            }
-
-            printf("Masukkan Nomor Telpon Baru Ibu Siswa:\n");
-            getInputPhone(&target_entry->data.mother_phone, "-");
-            break;
-        case 10:
-            printf("Masukkan Nama Baru Wali Siswa (Kosongkan untuk menghapus):\n");
-            getInputDynamic(&target_entry->data.guardian_name, NULL, "-");
-
-            // If guardian now doesn't exist, remove phone number
-            if (had_guardian && strcmp(target_entry->data.guardian_name, "-") == 0)
-                allocateString(&target_entry->data.guardian_phone, "-");
-            break;
-        case 11:
-            // Guardian doesn't exist yet, get that first
-            if (!had_guardian)
-            {
-                printf("Masukkan Nama Baru Wali Siswa:\n");
-                getInputDynamic(&target_entry->data.guardian_name, NULL, NULL);
-            }
-
-            printf("Masukkan Nomor Telpon Baru Wali Siswa:\n");
-            getInputPhone(&target_entry->data.guardian_phone, "-");
-            break;
-
-        case 12: new_head = deleteStudent(head, nisn_buffer); break;
-        case 13: /* Do Nothing */ break;
+        case 8: new_head = deleteStudent(head, nisn_buffer); break;
+        case 9: /* Do Nothing */ break;
         default: printf("Pilihan Tidak Valid\n"); break;
     }
 
-    if (choice < 12)
+    if (choice < 8)
         printf("Data siswa berhasil diedit\n");
-    else if (choice == 12)
+    else if (choice == 8)
         printf("Data siswa berhasil dihapus\n");
 
     return new_head;
@@ -463,20 +367,10 @@ void viewStudent(StudentEntry *head)
            student->data.birth_date.day,
            student->data.birth_date.month,
            student->data.birth_date.year);
+    printf("Hobi           : %s\n", student->data.hobby);
+    printf("Kelas          : %s\n", student->data.class);
     printf("Alamat Rumah   : %s\n", student->data.address);
     printf("Nomor Telpon   : %s\n", student->data.phone_number);
-    printf("\n");
-    printf("Nama Ayah      : %s\n", student->data.father_name);
-    if (strcmp(student->data.father_name, "-") != 0)
-        printf("Telpon Ayah    : %s\n", student->data.father_phone);
-    printf("\n");
-    printf("Nama Ibu       : %s\n", student->data.mother_name);
-    if (strcmp(student->data.mother_name, "-") != 0)
-        printf("Telpon Ibu     : %s\n", student->data.mother_phone);
-    printf("\n");
-    if (strcmp(student->data.guardian_name, "-") != 0)
-        printf("Nama Wali      : %s\n", student->data.guardian_name);
-    printf("Telpon Wali    : %s\n", student->data.guardian_phone);
 }
 
 // Free student entry list
@@ -545,28 +439,16 @@ StudentEntry *loadData(char **loaded_file_ptr)
                &temp->data.birth_date.year);
 
         fscanf(input_file, "%1023[^\n]\n", buffer);
+        allocateString(&temp->data.hobby, buffer);
+
+        fscanf(input_file, "%1023[^\n]\n", buffer);
+        allocateString(&temp->data.class, buffer);
+
+        fscanf(input_file, "%1023[^\n]\n", buffer);
         allocateString(&temp->data.address, buffer);
 
         fscanf(input_file, "%31[^\n]\n", buffer);
         allocateString(&temp->data.phone_number, buffer);
-
-        fscanf(input_file, "%1023[^\n]\n", buffer);
-        allocateString(&temp->data.father_name, buffer);
-
-        fscanf(input_file, "%31[^\n]\n", buffer);
-        allocateString(&temp->data.father_phone, buffer);
-
-        fscanf(input_file, "%1023[^\n]\n", buffer);
-        allocateString(&temp->data.mother_name, buffer);
-
-        fscanf(input_file, "%31[^\n]\n", buffer);
-        allocateString(&temp->data.mother_phone, buffer);
-
-        fscanf(input_file, "%1023[^\n]\n", buffer);
-        allocateString(&temp->data.guardian_name, buffer);
-
-        fscanf(input_file, "%31[^\n]\n", buffer);
-        allocateString(&temp->data.guardian_phone, buffer);
     }
 
     // Correct ordering by reversing list
@@ -668,17 +550,11 @@ void saveData(StudentEntry *head, char *last_loaded_file)
                 curr->data.birth_date.month,
                 curr->data.birth_date.year);
 
+        fprintf(output_file, "%s\n", curr->data.hobby);
+        fprintf(output_file, "%s\n", curr->data.class);
+
         fprintf(output_file, "%s\n", curr->data.address);
         fprintf(output_file, "%s\n", curr->data.phone_number);
-
-        fprintf(output_file, "%s\n", curr->data.father_name);
-        fprintf(output_file, "%s\n", curr->data.father_phone);
-
-        fprintf(output_file, "%s\n", curr->data.mother_name);
-        fprintf(output_file, "%s\n", curr->data.mother_phone);
-
-        fprintf(output_file, "%s\n", curr->data.guardian_name);
-        fprintf(output_file, "%s\n", curr->data.guardian_phone);
 
         curr = curr->next;
     }
