@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 // Simple date struct
 typedef struct Date
@@ -33,6 +34,21 @@ typedef struct StudentEntry
     StudentData          data;
     struct StudentEntry *next;
 } StudentEntry;
+
+// Isolates an entry from a string, input is modified,
+// used mainly for reverse order string parsing
+char *isolateEntry(char *input, const char *key)
+{
+    char *res = strstr(input, key);
+    if (res != NULL)
+    {
+        // Replace previous space with terminator
+        if (res != input && res[-1] == ' ') res[-1] = '\0';
+
+        res += strlen(key);
+    }
+    return res;
+}
 
 // Allocate string, deallocate old string if it exists
 void allocateString(char **output_ptr, const char *str)
@@ -363,7 +379,7 @@ void viewStudent(StudentEntry *head)
     printf("Nama           : %s\n", student->data.name);
     printf("Jenis Kelamin  : %c\n", student->data.sex);
     printf("Tempat Lahir   : %s\n", student->data.birth_place);
-    printf("Tanggal Lahir  : %d-%d-%d\n",
+    printf("Tanggal Lahir  : %02d/%02d/%02d\n",
            student->data.birth_date.day,
            student->data.birth_date.month,
            student->data.birth_date.year);
@@ -387,16 +403,21 @@ void clearStudents(StudentEntry *head)
  */
 
 // Load student data collection from file
-StudentEntry *loadData(char **loaded_file_ptr)
+StudentEntry *loadData(char **loaded_file_ptr, char *file_path)
 {
     StudentEntry *result     = NULL;
     FILE         *input_file = NULL;
     char          path_buffer[128];
     char          buffer[1024];
 
-    printf("--- Muat Data ---\n");
-    printf("Lokasi File:\n");
-    getInput(path_buffer, sizeof(path_buffer) - 1, NULL, NULL);
+    if (file_path == NULL)
+    {
+        printf("--- Muat Data ---\n");
+        printf("Lokasi File:\n");
+        getInput(path_buffer, sizeof(path_buffer) - 1, NULL, NULL);
+    }
+    else
+        strcpy(path_buffer, file_path);
 
     input_file = fopen(path_buffer, "r");
     if (input_file == NULL)
@@ -405,51 +426,81 @@ StudentEntry *loadData(char **loaded_file_ptr)
         return result;
     }
 
-    // File header
-    fgets(buffer, sizeof(buffer), input_file);
-    buffer[strcspn(buffer, "\n")] = '\0';
-    if (strcmp(buffer, "PDSiswa1") != 0)
+    // Keep track of read times
+    clock_t start_time = clock();
+    clock_t end_time;
+    double  execution_time;
+
+    // Read all lines of data
+    int successful_read = 0;
+    int entries_read    = 0;
+
+    StudentEntry *temp = NULL;
+
+    do
     {
-        printf("Peringatan! Header file %s tidak sesuai, data mungkin salah\n",
-               path_buffer);
-    }
+        char read_buffer[8196] = {0};
+        char birth_buffer[64]  = {0};
 
-    // NISN
-    while (fscanf(input_file, "%10[^\n]\n", buffer) != EOF)
-    {
-        StudentEntry *temp = (StudentEntry *)calloc(1, sizeof(StudentEntry));
-        temp->data         = (StudentData){0};
+        if (successful_read)
+        {
+            temp->next = result;
+            result     = temp;
+            entries_read++;
+        }
 
-        temp->next = result;
-        result     = temp;
+        temp       = (StudentEntry *)calloc(1, sizeof(StudentEntry));
+        temp->data = (StudentData){0};
 
-        strncpy(temp->data.nisn, buffer, 10);
+        // Read whole line then process
+        successful_read = fgets(read_buffer, sizeof(read_buffer), input_file) != NULL;
 
-        fscanf(input_file, "%1023[^\n]\n", buffer);
-        allocateString(&temp->data.name, buffer);
+        read_buffer[strcspn(read_buffer, "\r\n")] = '\0';
 
-        fscanf(input_file, "%c\n", &temp->data.sex);
+        if (successful_read)
+        {
+            // Read one element at a time in reverse order
+            //  to allow for spaces in the entries
+            char *element_start = NULL;
 
-        fscanf(input_file, "%1023[^\n]\n", buffer);
-        allocateString(&temp->data.birth_place, buffer);
+            element_start = isolateEntry(read_buffer, "alamat:");
+            allocateString(&temp->data.address, element_start);
 
-        fscanf(input_file, "%d-%d-%d\n",
-               &temp->data.birth_date.day,
-               &temp->data.birth_date.month,
-               &temp->data.birth_date.year);
+            element_start = isolateEntry(read_buffer, "hobi:");
+            allocateString(&temp->data.hobby, element_start);
 
-        fscanf(input_file, "%1023[^\n]\n", buffer);
-        allocateString(&temp->data.hobby, buffer);
+            element_start = isolateEntry(read_buffer, "nohp:");
+            allocateString(&temp->data.phone_number, element_start);
 
-        fscanf(input_file, "%1023[^\n]\n", buffer);
-        allocateString(&temp->data.class, buffer);
+            element_start  = isolateEntry(read_buffer, "jeniskelamin:");
+            temp->data.sex = *element_start;
 
-        fscanf(input_file, "%1023[^\n]\n", buffer);
-        allocateString(&temp->data.address, buffer);
+            element_start = isolateEntry(read_buffer, "ttl:");
+            sscanf(element_start, "%63[^/]/%d/%d/%d", birth_buffer,
+                   &temp->data.birth_date.day,
+                   &temp->data.birth_date.month,
+                   &temp->data.birth_date.year);
+            allocateString(&temp->data.birth_place, birth_buffer);
 
-        fscanf(input_file, "%31[^\n]\n", buffer);
-        allocateString(&temp->data.phone_number, buffer);
-    }
+            element_start = isolateEntry(read_buffer, "kelas:");
+            allocateString(&temp->data.class, element_start);
+
+            element_start = isolateEntry(read_buffer, "nisn:");
+            strncpy(temp->data.nisn, element_start, sizeof(temp->data.nisn));
+
+            element_start = isolateEntry(read_buffer, "nama:");
+            allocateString(&temp->data.name, element_start);
+        }
+
+    } while (successful_read);
+
+    // Free extra entry
+    free(temp);
+    temp = NULL;
+
+    // Calculate read time
+    end_time       = clock();
+    execution_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
 
     // Correct ordering by reversing list
     StudentEntry *curr = result;
@@ -470,7 +521,7 @@ StudentEntry *loadData(char **loaded_file_ptr)
         allocateString(loaded_file_ptr, path_buffer);
 
     fclose(input_file);
-    printf("Data berhasil dimuat\n");
+    printf("Berhasil memuat %d entri data dalam %.6f detik\n", entries_read, execution_time);
 
     return result;
 }
@@ -536,25 +587,19 @@ void saveData(StudentEntry *head, char *last_loaded_file)
         return;
     }
 
-    // File header
-    fprintf(output_file, "PDSiswa1\n");
-
     while (curr != NULL)
     {
-        fprintf(output_file, "%s\n", curr->data.nisn);
-        fprintf(output_file, "%s\n", curr->data.name);
-        fprintf(output_file, "%c\n", curr->data.sex);
-        fprintf(output_file, "%s\n", curr->data.birth_place);
-        fprintf(output_file, "%d-%d-%d\n",
+        fprintf(output_file, "nama:%s ", curr->data.name);
+        fprintf(output_file, "nisn:%s ", curr->data.nisn);
+        fprintf(output_file, "kelas:%s ", curr->data.class);
+        fprintf(output_file, "ttl:%s/%02d/%02d/%02d ", curr->data.birth_place,
                 curr->data.birth_date.day,
                 curr->data.birth_date.month,
                 curr->data.birth_date.year);
-
-        fprintf(output_file, "%s\n", curr->data.hobby);
-        fprintf(output_file, "%s\n", curr->data.class);
-
-        fprintf(output_file, "%s\n", curr->data.address);
-        fprintf(output_file, "%s\n", curr->data.phone_number);
+        fprintf(output_file, "jeniskelamin:%c ", curr->data.sex);
+        fprintf(output_file, "nohp:%s ", curr->data.phone_number);
+        fprintf(output_file, "hobi:%s ", curr->data.hobby);
+        fprintf(output_file, "alamat:%s\n", curr->data.address);
 
         curr = curr->next;
     }
@@ -563,13 +608,20 @@ void saveData(StudentEntry *head, char *last_loaded_file)
     printf("Data berhasil disimpan\n");
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     // Collection of all student data
     StudentEntry *student_entries = NULL;
 
     int   choice            = 0;
     char *loaded_file_cache = NULL;
+
+    if (argc == 2)
+    {
+        // Load using given filename
+        student_entries = loadData(&loaded_file_cache, argv[1]);
+        printf("\n");
+    }
 
     printf("--- Selamat Datang di Sistem Pendataan Siswa ---\n\n");
 
@@ -597,7 +649,7 @@ int main(void)
             case 4:
                 // Clean previously loaded data
                 clearStudents(student_entries);
-                student_entries = loadData(&loaded_file_cache);
+                student_entries = loadData(&loaded_file_cache, NULL);
                 break;
             case 5: saveData(student_entries, loaded_file_cache); break;
             case 6: printf("Keluar dari program\n"); break;
