@@ -15,7 +15,7 @@ typedef struct Date
 // Individual student data
 typedef struct StudentData
 {
-    char  nisn[11];
+    char  nisn[21];
     char *name;
     char  sex;
     char *birth_place;
@@ -195,7 +195,7 @@ StudentEntry *addStudent(StudentEntry *head)
 
     printf("--- Tambah Data Siswa ---\n");
     printf("NISN Siswa:\n");
-    getInput(new_data.nisn, 10, "0123456789", NULL);
+    getInput(new_data.nisn, sizeof(new_data.nisn) - 1, "0123456789", NULL);
 
     if (findStudent(head, new_data.nisn) != NULL)
     {
@@ -278,12 +278,12 @@ StudentEntry *editStudent(StudentEntry *head)
 {
     StudentEntry *new_head     = head;
     StudentEntry *target_entry = NULL;
-    char          nisn_buffer[11];
+    char          nisn_buffer[21];
     int           choice = 0;
 
     printf("--- Edit Data Siswa ---\n");
     printf("NISN Siswa:\n");
-    getInput(nisn_buffer, 10, "0123456789", NULL);
+    getInput(nisn_buffer, sizeof(nisn_buffer) - 1, "0123456789", NULL);
 
     target_entry = findStudent(head, nisn_buffer);
     if (target_entry == NULL)
@@ -362,10 +362,10 @@ StudentEntry *editStudent(StudentEntry *head)
 void viewStudent(StudentEntry *head)
 {
     StudentEntry *student = NULL;
-    char          nisn_buffer[11];
+    char          nisn_buffer[21];
 
     printf("Masukkan NISN Siswa:\n");
-    getInput(nisn_buffer, 10, "0123456789", NULL);
+    getInput(nisn_buffer, sizeof(nisn_buffer) - 1, "0123456789", NULL);
 
     student = findStudent(head, nisn_buffer);
     if (student == NULL)
