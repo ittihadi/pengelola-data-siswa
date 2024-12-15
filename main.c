@@ -442,16 +442,6 @@ StudentEntry *loadData(char **loaded_file_ptr, char *file_path)
         char read_buffer[8196] = {0};
         char birth_buffer[64]  = {0};
 
-        if (successful_read)
-        {
-            temp->next = result;
-            result     = temp;
-            entries_read++;
-        }
-
-        temp       = (StudentEntry *)calloc(1, sizeof(StudentEntry));
-        temp->data = (StudentData){0};
-
         // Read whole line then process
         successful_read = fgets(read_buffer, sizeof(read_buffer), input_file) != NULL;
 
@@ -459,6 +449,12 @@ StudentEntry *loadData(char **loaded_file_ptr, char *file_path)
 
         if (successful_read)
         {
+            temp       = (StudentEntry *)calloc(1, sizeof(StudentEntry));
+            temp->data = (StudentData){0};
+            temp->next = result;
+            result     = temp;
+            entries_read++;
+
             // Read one element at a time in reverse order
             //  to allow for spaces in the entries
             char *element_start = NULL;
@@ -493,10 +489,6 @@ StudentEntry *loadData(char **loaded_file_ptr, char *file_path)
         }
 
     } while (successful_read);
-
-    // Free extra entry
-    free(temp);
-    temp = NULL;
 
     // Calculate read time
     end_time       = clock();
@@ -533,6 +525,7 @@ void saveData(StudentEntry *head, char *last_loaded_file)
     char  path_buffer[128];
     char  suggested_path[128];
     char  choice;
+    int   entries_saved = 0;
 
     StudentEntry *curr = head;
 
@@ -587,6 +580,10 @@ void saveData(StudentEntry *head, char *last_loaded_file)
         return;
     }
 
+    clock_t start_time = clock();
+    clock_t end_time;
+    double  execution_time;
+
     while (curr != NULL)
     {
         fprintf(output_file, "nama:%s ", curr->data.name);
@@ -602,10 +599,15 @@ void saveData(StudentEntry *head, char *last_loaded_file)
         fprintf(output_file, "alamat:%s\n", curr->data.address);
 
         curr = curr->next;
+        entries_saved++;
     }
 
+    // Calculate read time
+    end_time       = clock();
+    execution_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+
     fclose(output_file);
-    printf("Data berhasil disimpan\n");
+    printf("Berhasil menyimpan %d entry dalam %.6f detik\n", entries_saved, execution_time);
 }
 
 int main(int argc, char **argv)
