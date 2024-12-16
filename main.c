@@ -124,7 +124,7 @@ void getInputDate(Date *output)
     {
         match = 1;
 
-        scanf("%d-%d-%d", &new_day, &new_month, &new_year);
+        scanf("%d/%d/%d", &new_day, &new_month, &new_year);
         clearInput();
 
         if (new_month == 4 || new_month == 6 || new_month == 9 || new_month == 11)
@@ -213,7 +213,7 @@ StudentEntry *addStudent(StudentEntry *head)
     printf("Tempat Lahir Siswa:\n");
     getInputDynamic(&new_data.birth_place, NULL, NULL);
 
-    printf("Tanggal Lahir Siswa (DD-MM-YYYY):\n");
+    printf("Tanggal Lahir Siswa (DD/MM/YYYY):\n");
     getInputDate(&new_data.birth_date);
 
     printf("Hobi Siswa:\n");
@@ -298,7 +298,7 @@ StudentEntry *editStudent(StudentEntry *head)
     printf("Data yang ingin diedit\n");
     printf("[1] Nama               : %s\n", target_entry->data.name);
     printf("[2] Tempat Lahir       : %s\n", target_entry->data.birth_place);
-    printf("[3] Tanggal Lahir      : %d-%d-%d\n",
+    printf("[3] Tanggal Lahir      : %02d/%02d/%02d\n",
            target_entry->data.birth_date.day,
            target_entry->data.birth_date.month,
            target_entry->data.birth_date.year);
@@ -325,7 +325,7 @@ StudentEntry *editStudent(StudentEntry *head)
             getInputDynamic(&target_entry->data.birth_place, NULL, NULL);
             break;
         case 3:
-            printf("Masukkan Tanggal Lahir Baru Siswa:\n");
+            printf("Masukkan Tanggal Lahir Baru Siswa (DD/MM/YYYY):\n");
             getInputDate(&target_entry->data.birth_date);
             break;
         case 4:
