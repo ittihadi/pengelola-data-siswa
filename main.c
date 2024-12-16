@@ -397,7 +397,7 @@ void clearStudents(StudentEntry *head)
 }
 
 /*
- * Load Date -> store loaded file, no default
+ * Load Data -> store loaded file, no default
  * Save Data -> default path is last loaded file if exists,
  *              otherwise a default path with conflict mitigation
  */
